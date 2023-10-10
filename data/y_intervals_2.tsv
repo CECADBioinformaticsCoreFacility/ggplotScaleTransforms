@@ -1,0 +1,4 @@
+from	to	y_scaling_factors
+-5	10	0.1
+10	20	1
+20	Inf	0.1
