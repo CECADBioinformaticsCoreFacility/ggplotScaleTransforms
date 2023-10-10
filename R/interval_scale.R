@@ -200,7 +200,7 @@ y_data <- c(-4, 1, 2, 2.5, 9.45, 10.1, 12, 15, 41.6,50.5,60, 82, 91)
 ##w <- 10
 ##Cairo::Cairo(file = "double_scaling.png", unit = "in", dpi = 300, width = w, 
 ##        height = w * 6/10, type = "png", bg = "white")
-ggplot(tibble::tibble(x=x_data,
+p <- ggplot(tibble::tibble(x=x_data,
                       y=y_data
                       ),
        aes(x=x,y=y)
@@ -216,5 +216,5 @@ ggplot(tibble::tibble(x=x_data,
                        n.breaks=50
                        )
 ##dev.off()
-
+invisible(p)
 
