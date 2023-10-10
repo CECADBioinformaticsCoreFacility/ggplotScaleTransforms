@@ -20,7 +20,6 @@ p_y <- ggplot(tibble::tibble(x = readr::read_tsv("data/xydata_1.tsv")$x,
   scale_y_continuous(trans = interval_trans(data_intervals,
                                             scaling_factors),
                      n.breaks = 50
-                     ##expand = c(0, 0) 
                      )
                      
 
@@ -38,8 +37,8 @@ y_data_intervals <-
 y_scaling_factors <- c(1 / 10,     1,    1 / 10)
 
 
-p_xy <- ggplot(tibble::tibble(x = readr::read_tsv("data/xydata_2")$x,
-                              y = readr::read_tsv("data/xydata_2")$y),
+p_xy <- ggplot(tibble::tibble(x = readr::read_tsv("data/xydata_2.tsv")$x,
+                              y = readr::read_tsv("data/xydata_2.tsv")$y),
                aes(x = x, y = y)) +
   geom_point() +
   
