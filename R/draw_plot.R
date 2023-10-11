@@ -1,31 +1,49 @@
 ##source("R/helpers.R")
 
-execute_conditionally <- function(obj, params) {
+get_transformer <- function(obj, params) {
   if (class(obj) == "character") {
-    ## if obj is a string and
-    ## it is the name of an existing function,
-    ## return it as is
-    ifelse(exists(obj) &&
-             (class(eval(as.symbol(
-               obj
-             ))) == "function"),
-           obj,
-           NULL)
+    obj_name <- obj ## later needed for diagnostic message
     
+    ## if obj is a string and paste0(obj, "_trans")
+    ## is the name of an existing built-in transformer
+    ## of the "scales" package, return the transformer:
+    
+    if (exists(paste0(obj, "_trans"),
+               where = asNamespace("scales"),
+               mode = "function")) {
+      res <- obj
+    } else {
+      res <- NULL
+    }
   } else if (class(obj) == "function") {
+    obj_name <- deparse(substitute(obj))
+    
     ## if obj is a function object,
-    ## call it with params (if appropriate) and return the result
+    ## call it with params (if appropriate) and return the result:
     
     if (check_parameters(obj, names(params))) {
-      do.call(obj, params)
+      res <- do.call(obj, params)
     } else {
-      NULL
+      res <- NULL
     }
   } else {
-    ## in any other case, return NULL
-    
-    NULL
+    ## in all other cases, return NULL:
+    res <- NULL
   }
+  
+  if (!is.null(obj) && is.null(res)) {
+    message(
+      'Your input "',
+      obj_name,'"',
+      " was nut NULL, but function get_transformer() returned NULL.\n",
+      "Possible reasons are:\n",
+      "(1) You asked for a built-in transformer which ",
+      "does not exist.\n",
+      "(2) The function you passed to compute a custom transformer\n",
+      "could not handle the supplied parameters."
+    )
+  }
+  res
 }
 
 
@@ -43,8 +61,8 @@ draw_plot <- function(data,
     stop('Expecting y=numeric columns "x" and "y" in "data"!')
   }
   
-  x_trans <- execute_conditionally(x_trans, x_trans_params)
-  y_trans <- execute_conditionally(y_trans, y_trans_params)
+  x_trans <- get_transformer(x_trans, x_trans_params)
+  y_trans <- get_transformer(y_trans, y_trans_params)
   
   p <- ggplot2::ggplot(data,
                        aes(x = x,
