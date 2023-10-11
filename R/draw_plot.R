@@ -1,81 +1,63 @@
-source("R/helpers.R")
-source("R/interval_trans.R")
+##source("R/helpers.R")
 
-requires(ggplot2)
-
-get_transfunc <- function(transformation_info) {
-  if (!is(transformation_info),
-      "data.frame") {
-    return(NULL)
-  }
-  
-  if (all(c("from",
-            "to",
-            "scaling_factor") %in% colnames(x_transformation_info))) {
-    transfunc_x <-
-      interval_trans(
-        x_transformation_info %>% select(from, to),
-        x_transformation_info %>% pull(scaling_factor)
-      )
+execute_conditionally <- function(obj, params) {
+  if (class(obj) == "character") {
+    ## if obj is a string which is the name of a function,
+    ## return it as is
+    ifelse(is(obj, "function"),
+           obj,
+           NULL)
+    
+  } else if (class(obj) == "function") {
+    ## if obj is a function object,
+    ## call it with params (if appropriate) and return the result
+    
+    if (check_parameters(obj, names(params))) {
+      do.call(obj, params)
+    } else {
+      NULL
+    }
   } else {
+    ## in any other case, return NULL
+    
     NULL
   }
 }
 
-draw_plot <- function(x_data,
-                      y_data,
-                      x_transformation_info = NULL,
-                      y_transformation_info = NULL,
-                      x_nbreaks=50,
-                      y_nbreaks=50) {
-  
-  transfunc_x <- get_transfunc(x_transformation_info)
-  transfunc_y <- get_transfunc(y_transformation_info)
 
-
-  p <- ggplot(tibble::tibble(x = x_data,
-                             y = y_data),
-              aes(x = x,
-                  y = y)) +
-    ##theme_classic() +
-    geom_point()
-  
-  if(!is.null(transfunc_x)) {
-    p <- p + scale_x_continuous(trans = transfunc_x)
-                       n.breaks = 50
-    )
-    
+draw_plot <- function(data,
+                      x_trans = NULL,
+                      x_trans_params = list(),
+                      y_trans = NULL,
+                      y_trans_params = list(),
+                      x_n.breaks = 50,
+                      y_n.breaks = 50,
+                      classic = FALSE) {
+  if (!check_columns(data,
+                     c(x = "numeric", 
+                       y = "numeric"))) {
+    stop('Expecting y=numeric columns "x" and "y" in "data"!')
   }
-                
-  scale_y_continuous(trans = interval_trans(data_intervals,
-                                            scaling_factors),
-                     n.breaks = 50
-                     )
-                     
-
-## ------------------------------------------------------------------------
-## 2-axes scaling:
-## ------------------------------------------------------------------------
-x_data_intervals <-
-  data.frame(from = c(-5,  20,  30),
-             to   = c(20, 30 , Inf))
-x_scaling_factors <- c(1 / 10,     1,    1 / 10)
-
-y_data_intervals <-
-  data.frame(from = c(-5,   10,  20),
-             to   = c(10,  20 , Inf))
-y_scaling_factors <- c(1 / 10,     1,    1 / 10)
-
-
-p_xy <- ggplot(tibble::tibble(x = readr::read_tsv("data/xydata_2.tsv")$x,
-                              y = readr::read_tsv("data/xydata_2.tsv")$y),
-               aes(x = x, y = y)) +
-  geom_point() +
   
-  scale_x_continuous(trans = interval_trans(x_data_intervals,
-                                            x_scaling_factors),
-                     n.breaks = 50) +
-  scale_y_continuous(trans = interval_trans(y_data_intervals,
-                                            y_scaling_factors),
-                     n.breaks = 50)
+  x_trans <- execute_conditionally(x_trans, x_trans_params)
+  y_trans <- execute_conditionally(y_trans, y_trans_params)
+  
+  p <- ggplot2::ggplot(data,
+                       aes(x = x,
+                           y = y)) + geom_point()
+  
+  if (classic)
+    p <- p + theme_classic()
+  
+  if (!is.null(x_trans)) {
+    p <- p + scale_x_continuous(trans = x_trans,
+                                n.breaks =  x_n.breaks)
+  }
+  if (!is.null(y_trans)) {
+    p <- p + scale_y_continuous(trans = y_trans,
+                                n.breaks =  y_n.breaks)
+  }
+  
+  p
+}
 

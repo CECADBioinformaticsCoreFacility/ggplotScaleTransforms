@@ -1,4 +1,4 @@
-library(ggplot2)
+require(scales)
 
 interval_trans <- function(intervals,
                            scaling_factors) {
