@@ -4,7 +4,10 @@ execute_conditionally <- function(obj, params) {
   if (class(obj) == "character") {
     ## if obj is a string which is the name of a function,
     ## return it as is
-    ifelse(is(obj, "function"),
+    ifelse(exists(obj) &&
+             (class(eval(as.symbol(
+               obj
+             ))) == "function"),
            obj,
            NULL)
     

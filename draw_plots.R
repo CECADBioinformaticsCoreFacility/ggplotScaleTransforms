@@ -49,5 +49,18 @@ draw_plot(data,
                               
           )
 
+## ------------------------------------------------------------------------
+## Use a built-in function:
+## if an x_ or y_trans parameter is the *name* (character string)
+## of an existing function with a single parameter, 
+## then this string is passed as the "trans" parameter of 
+## scale_*_continuous, and the point locations on the respective
+## axis become the result of this function on the coordinate
+## values of the axis.
+## ------------------------------------------------------------------------
+draw_plot(readr::read_tsv("data/xydata_1.tsv"),
+          x_trans=NULL,
+          y_trans="log10" ##"sqrt"      
+          )
 
 
