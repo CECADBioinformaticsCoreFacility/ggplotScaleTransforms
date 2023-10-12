@@ -1,5 +1,27 @@
-##source("R/helpers.R")
-
+#' Return a scale transformation function or object
+#' 
+#' @description `get_transformer` returns an object which can be passed to 
+#'`ggplot2::scale_x_continuous` or  `ggplot2::scale_y_continuous` via the 
+#'`trans` parameter of these functions. This object can be constructed in two 
+#'different ways, dependent on the class and on properties of 
+#'`get_transformer`'s  `obj` parameter: (1) If `obj` is a string and if 
+#'`paste0(obj, "_trans")` is an existing transformer function of the scales 
+#'package, then `obj` is simply returned, because it is is already a valid  
+#'value. Otherwise NULL is returned.  (2) If `obj` is a function object, 
+#'then `get_transformer` calls it with the arguments in named list `params`. 
+#'If the class of the result is  "trans", the result is returned, 
+#'otherwise NULL.  This allows to create "trans" objects by custom functions, 
+#'which notably can take arbitrary parameters to create parameter dependent 
+#'forward and inverse functions within the "trans" object on the fly.
+#'If neither (1) nor (2) apply,  `get_transformer` returns NULL. Thus, 
+#'a NULL result always indicates that no valid transformer is returned, 
+#'for any reason. It is up to the calling function to handle a NULL result
+#'in a meaningful way.
+#' @param obj Any R object.
+#' @param params A named list.
+#' @returns An object to be used as value of the "trans" parameter of
+#'   ggplot2::scale_x_continuous or ggplot2::scale_y_continuous.
+#'   
 get_transformer <- function(obj, params) {
   if (class(obj) == "character") {
     obj_name <- obj ## later needed for diagnostic message
@@ -19,10 +41,12 @@ get_transformer <- function(obj, params) {
     obj_name <- deparse(substitute(obj))
     
     ## if obj is a function object,
-    ## call it with params (if appropriate) and return the result:
+    ## call it with params (if appropriate) and return the result
+    ## if it is of class "trans":
     
     if (check_parameters(obj, names(params))) {
       res <- do.call(obj, params)
+      if(class(res) != "trans") res <- NULL 
     } else {
       res <- NULL
     }
@@ -39,8 +63,8 @@ get_transformer <- function(obj, params) {
       "Possible reasons are:\n",
       "(1) You asked for a built-in transformer which ",
       "does not exist.\n",
-      "(2) The function you passed to compute a custom transformer\n",
-      "could not handle the supplied parameters."
+      "(2) The function you passed to compute a custom transformation\n",
+      "object could not handle the supplied parameters."
     )
   }
   res

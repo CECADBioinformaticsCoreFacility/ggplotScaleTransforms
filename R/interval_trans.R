@@ -1,5 +1,25 @@
 require(scales)
-
+#' Return a transformation object with interval-dependent inter-point distances
+#'  
+#'@description
+#'`interval_trans` returns a transformation object which can be passed to 
+#'`ggplot2::scale_x_continuous` or  `ggplot2::scale_y_continuous` via the 
+#'`trans` parameter of these functions. The domain of the transformation 
+#'on the real line is assumed to be covered by N consecutive intervals,
+#'whose inclusive start points and exclusive endpoints are given by 
+#'columns "from" and "to" of the `intervals` parameter. (Note that the 
+#'endpoint of the last interval is assumed inclusive).
+#'For each interval, a positive numeric scaling factor is defined in parameter
+#'`scaling_factors`. The transformation is defined as follows:   
+#'Assume four data points such that (1) the distance between p1 and p2 equals
+#'the distance between p3 and p4 on the un-scaled axis, (2) p_1 and p_2 are in
+#'interval i, with scaling factor s_i, while p_3 and p_4 are in interval j, 
+#'with scaling factor s_j. Then on the scaled axis, the distance between 
+#'p_1 and p_2 equal s_i/s_j times the distance between p_3 and p_4.
+#'@param intervals A 2-column data.frame with colnames (in this order) "from"
+#'and "to". 
+#'@param scaling_factors A non-negative numeric vector. 
+#'@return A transformation object of class "trans".
 interval_trans <- function(intervals,
                            scaling_factors) {
   ## intervals: a 2-column data.frame with colnames (in this order)
