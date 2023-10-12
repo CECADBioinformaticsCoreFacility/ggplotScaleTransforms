@@ -9,54 +9,36 @@ require(scales)
 #'whose inclusive start points and exclusive endpoints are given by 
 #'columns "from" and "to" of the `intervals` parameter. (Note that the 
 #'endpoint of the last interval is assumed inclusive).
-#'For each interval, a positive numeric scaling factor is defined in parameter
+#'For each interval, a positive numeric scaling factor is given in parameter
 #'`scaling_factors`. The transformation is defined as follows:   
-#'Assume four data points such that (1) the distance between p1 and p2 equals
-#'the distance between p3 and p4 on the un-scaled axis, (2) p_1 and p_2 are in
+#'Assume four data points such that (1) the distance between p_1 and p_2 equals
+#'the distance between p_3 and p_4 on the un-scaled axis, (2) p_1 and p_2 are in
 #'interval i, with scaling factor s_i, while p_3 and p_4 are in interval j, 
 #'with scaling factor s_j. Then on the scaled axis, the distance between 
 #'p_1 and p_2 equal s_i/s_j times the distance between p_3 and p_4.
 #'@param intervals A 2-column data.frame with colnames (in this order) "from"
 #'and "to". 
-#'@param scaling_factors A non-negative numeric vector. 
+#'@param scaling_factors A non-negative numeric vector, of length `nrow(intervals)` 
 #'@return A transformation object of class "trans".
 interval_trans <- function(intervals,
                            scaling_factors) {
-  ## intervals: a 2-column data.frame with colnames (in this order)
-  ##            from: INclusive start points
-  ##                  of a set of intervals in real space
-  ##            to: EXclusive end points of these intervals,
-  ##                where the "to" value of the last interval
-  ##                is considered INclusive
-  ##
-  ##            The intervals must be consecutive,
-  ##            i.e., to[i] == from[i+1].
-  ##
-  ## scaling_factors: a numeric vector of length nrow(intervals).
-  ##                  For data points contained in intervals[i,],
-  ##                  the inter-point distances on the scaled
-  ##                  axis will be shrunken by the factor
-  ##                  scaling_factors[i].
-  
+
   ## The forward and inverse transformations treat a point
   ## in an interval [a,b[ as a + [1,(b-a)]. a is the "offset".
   ## Offsets are required by both the forward and
   ## the inverse transformations.
   
-  ## The offset of an interval in data space is
+  ## The offset of an interval in data space is simply
   ## the right (exclusive) boundary of the preceding interval
   ## (the first interval has offset zero).
   data_offsets <- shift_right(intervals$to,
                               pad = 0)
   
-  ## The offsets of the scaled intervals (in location space)
-  ## can in principle be calculated in the same way,
-  ## however because they are needed by the scaling function
-  ## itself, they must be precomputed in a little more involved
-  ## way.
-  ## NOTE that even if the first interval does not start at zero,
-  ## it must anyway be treated as if it did, i.e. it contributes
-  ## an offset of intervals$to[1].
+  ## Pre-compute the offsets of the scaled intervals (in location space)
+  ## (offsets in both spaces are needed by both transformation functions):
+  ## (NOTE that even if the first interval does not start at zero,
+  ##  it must anyway be treated as if it did, i.e. it contributes
+  ##  an offset of intervals$to[1]).
   scaled_interval_len <- c(intervals$to[1],
                            intervals$to[-1] - intervals$from[-1]) *  scaling_factors
   
@@ -64,14 +46,6 @@ interval_trans <- function(intervals,
                                        pad = 0))
   
   ## Define the forward and inverse mapping functions --
-  ## NOTE that they take the values of the intervals, the offsets,
-  ## and the scaling factors from the environment of interval_trans().
-  ## Only the values to be mapped to location space
-  ## or back to data space are passed as a (single) parameter.
-  ## Is this safe?
-  ## If not, is it possible for "transform" and "inverse" to take
-  ## more than a single parameter?
-  
   ## Map a data value to its scaled location:
   scale_forward <- function(x) {
     b <- find_bins(x,
@@ -85,8 +59,8 @@ interval_trans <- function(intervals,
     
   }
   ## The inverse function needs the scaled intervals,
-  ## in order to find the scaling factors of the scaled locations,
-  ## so we need to precompute them using scale_forward:
+  ## in order to find the scaling factors of the scaled locations.
+  ## Precompute them using the already-defined scale_forward function:
   scaled_intervals <-
     purrr::map_dfr(c(from = 1, to = 2),
                    function(.x)
@@ -105,7 +79,6 @@ interval_trans <- function(intervals,
       data_offsets[b]
   }
   
-  ##browser()
   scales::trans_new(
     "interval_scaling",
     transform = scale_forward,
